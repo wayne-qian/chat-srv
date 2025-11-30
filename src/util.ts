@@ -60,6 +60,17 @@ export function sleep(ms: number) {
     })
 }
 
+export const uniqueTimestamp = (() => {
+    let last = Math.round(performance.timeOrigin + performance.now())
+    return () => {
+        const now = Math.round(performance.timeOrigin + performance.now())
+        if (now <= last)
+            return last = last + 1
+        return last = now
+    }
+})()
+
+
 export class Signal {
     private p!: Promise<void>
     private r!: () => void
@@ -80,6 +91,3 @@ export class Signal {
         })
     }
 }
-
-
-

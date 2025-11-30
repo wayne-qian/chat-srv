@@ -115,6 +115,9 @@ export namespace Message {
         of(key: string) {
             const s = this.db.list(key)
             return {
+                async count() {
+                    return s.count()
+                },
                 async save(msg: T) {
                     const i = await s.count()
                     await s.append(msg)

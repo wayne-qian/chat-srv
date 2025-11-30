@@ -1,4 +1,4 @@
-import Express, { RequestHandler, ErrorRequestHandler } from 'express';
+import Express, { ErrorRequestHandler } from 'express';
 import Cors from 'cors'
 import BodyParser from 'body-parser'
 import OS from 'os'
@@ -11,6 +11,7 @@ import { Message } from './message'
 import { BadRequest, Forbidden } from './error';
 import { Database } from './database';
 import { sanitizeName, sanitizeUID, validateCID, validateMsgContent, validatePassword, validateRequestBody, validateToken, validateUID } from './validate'
+import { RWLock, uniqueTimestamp } from './util';
 
 const db = new Database(Path.join(OS.homedir(), '.chat-db'))
 const users = new User.Service(db)
@@ -93,7 +94,7 @@ app.put('/desc', async (req, res) => {
 })
 
 const nonces: { [uid in string]: number } = {}
-
+const msgLock = new RWLock()
 app.post('/messages', async (req, res) => {
     const body = validateRequestBody(req.body)
     const to = body.to
@@ -108,20 +109,23 @@ app.post('/messages', async (req, res) => {
         return res.json({})
 
     const { key, members } = await prepareFromTo(req.uid, to)
-    const ts = Date.now()
-    const i = await msgs.of(key).save({
-        f: req.uid,
-        c: content,
-        t: ts
+    await msgLock.wLock("receive", async () => {
+        const ts = uniqueTimestamp()
+        const i = await msgs.of(key).save({
+            f: req.uid,
+            c: content,
+            t: ts
+        })
+        if (!i && to.startsWith('@')) {
+            const peer = to.slice(1)
+            await Promise.all([
+                users.of(req.uid).addPeer(peer),
+                users.of(peer).addPeer(req.uid)])
+        }
+        msgd.dispatch({ i, from: req.uid, to, content, ts }, members)
+        res.json({ i })
     })
-    if (!i && to.startsWith('@')) {
-        const peer = to.slice(1)
-        users.of(req.uid).addPeer(peer)
-        users.of(peer).addPeer(req.uid)
-    }
-    msgd.dispatch({ i, from: req.uid, to, content, ts }, members)
     nonces[req.uid] = nonce
-    res.json({})
 })
 
 app.get('/messages', async (req, res) => {
@@ -136,13 +140,20 @@ app.get('/messages', async (req, res) => {
 })
 
 app.get('/messages/:to', async (req, res) => {
-    const start = parseInt(req.query.start as string)
-    const limit = parseInt(req.query.limit as string)
-    if (!(start >= 0 && limit > 0))
+    let start = parseInt(req.query.start as string)
+    let limit = parseInt(req.query.limit as string)
+    if (isNaN(start) || isNaN(limit) || limit <= 0)
         throw new BadRequest('invalid query')
 
     const { key } = await prepareFromTo(req.uid, req.params.to)
-    const { list, i0 } = await msgs.of(key).query(start, Math.min(limit, 100))
+
+    limit = Math.min(limit, 100)
+    if (start < 0) {
+        const count = await msgs.of(key).count()
+        start = Math.max(0, count - limit)
+    }
+
+    const { list, i0 } = await msgs.of(key).query(start, limit)
     res.json(list.map<Message.Regular<'omitTo'>>((e, i) => {
         return {
             i: i0 + i,
@@ -174,17 +185,16 @@ app.post('/channels/:cid', async (req, res) => {
     const cid = validateCID(req.params.cid)
     if (!await chns.exists(cid))
         throw new Forbidden('channel not found')
-    await chns.of(cid).addMember(req.uid)
+    const members = await chns.of(cid).addMember(req.uid)
     await users.of(req.uid).joinChannel(cid)
 
-    const { members } = await prepareFromTo(req.uid, cid)
     msgd.dispatch({
         event: 'join',
         src: req.uid,
         target: cid,
         ts: Date.now()
-    }, members)
-    res.json({})
+    }, members.map(v => v.uid))
+    res.json(members)
 })
 
 // leave channel
@@ -192,17 +202,17 @@ app.delete('/channels/:cid', async (req, res) => {
     const cid = validateCID(req.params.cid)
     if (!await chns.exists(cid))
         throw new Forbidden('channel not found')
-    await chns.of(cid).removeMember(req.uid)
+    const members = await chns.of(cid).removeMember(req.uid)
     await users.of(req.uid).leaveChannel(cid)
 
-    const { members } = await prepareFromTo(req.uid, cid)
+
     msgd.dispatch({
         event: 'leave',
         src: req.uid,
         target: cid,
         ts: Date.now()
-    }, members)
-    res.json({})
+    }, members.map(v => v.uid))
+    res.json(members)
 })
 
 // get member list
