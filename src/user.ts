@@ -2,9 +2,12 @@ import Crypto from 'crypto'
 import { Conflict, Unauthorized } from './error'
 import { Database } from './database'
 
+import Desc = User.Desc
+import Channel = User.Channel
+import Auth = User.Auth
 
 const defaultAlgo = 'sha256'
-function buildAuth(key: string, pass: string, algo = defaultAlgo): User.Auth {
+function buildAuth(key: string, pass: string, algo = defaultAlgo): Auth {
     const hmac = Crypto.createHmac(algo, key)
         .update(pass)
         .digest()
@@ -15,7 +18,7 @@ function buildAuth(key: string, pass: string, algo = defaultAlgo): User.Auth {
 
 export class User {
     private readonly db
-    constructor(readonly id: string, db: User.Service['db']) {
+    constructor(readonly id: string, db: Service['db']) {
         this.db = {
             auth: db.auth(id),
             desc: db.desc(id),
@@ -39,32 +42,18 @@ export class User {
     auth() {
         return this.db.auth.read()
     }
-    updateDesc(name: string) {
-        return this.db.desc.alter(v => {
-            return { ...v!, name }
-        })
+    alterDesc(f: (desc: Desc | null) => Desc) {
+        return this.db.desc.alter(f)
     }
-    updateAuth(pass: string) {
+    updatePassword(pass: string) {
         return this.db.auth.write(buildAuth(this.id, pass))
     }
     channels() {
         return this.db.channels.read()
     }
 
-    joinChannel(cid: string) {
-        return this.db.channels.alter(list => {
-            if (!list)
-                return [{ cid }]
-            return list.find(v => v.cid === cid) ? list : [...list, { cid }]
-        })
-    }
-
-    leaveChannel(cid: string) {
-        return this.db.channels.alter(list => {
-            if (!list)
-                return []
-            return list.filter(v => v.cid !== cid)
-        })
+    alterChannels(f: (list: Channel[] | null) => Channel[]) {
+        return this.db.channels.alter(f)
     }
 
     peers() {
@@ -97,12 +86,13 @@ export namespace User {
         timestamp: number
     }
 
-    type Channel = {
+    export type Channel = {
         cid: string
     }
-    type Peer = {
+    export type Peer = {
         uid: string
     }
+
     export class Service {
         private readonly db
         constructor(db: Database) {
@@ -149,7 +139,7 @@ export namespace User {
             return await this.generateToken(uid, auth)
         }
 
-        private async generateToken(uid: string, auth: User.Auth) {
+        private async generateToken(uid: string, auth: Auth) {
             for (; ;) {
                 const token = Crypto.randomBytes(10).toString('hex')
                 if (await this.db.token(token).tryWrite({
@@ -162,3 +152,5 @@ export namespace User {
         }
     }
 }
+
+import Service = User.Service

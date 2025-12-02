@@ -187,6 +187,7 @@ export namespace Database {
                         const s = JSON.stringify(obj)
                         await FS.promises.appendFile(path, s + '\n')
                         c.n++
+                        return c.n
                     })
                 },
                 range(start: number, limit: number) {

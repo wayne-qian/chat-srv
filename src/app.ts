@@ -11,7 +11,6 @@ import { Message } from './message'
 import { BadRequest, Forbidden } from './error';
 import { Database } from './database';
 import { sanitizeName, sanitizeUID, validateCID, validateMsgContent, validatePassword, validateRequestBody, validateToken, validateUID } from './validate'
-import { RWLock, uniqueTimestamp } from './util';
 
 const db = new Database(Path.join(OS.homedir(), '.chat-db'))
 const users = new User.Service(db)
@@ -78,7 +77,7 @@ app.put('/password', async (req, res) => {
 
     const u = users.of(req.uid)
     await u.verify(password)
-    await u.updateAuth(newPassword)
+    await u.updatePassword(newPassword)
     const token = await users.newToken(req.uid)
     res.json({ token })
 })
@@ -90,11 +89,13 @@ app.get('/desc', async (req, res) => {
 app.put('/desc', async (req, res) => {
     const body = validateRequestBody(req.body)
     const name = sanitizeName(body.name)
-    res.json(await users.of(req.uid).updateDesc(name))
+    const desc = await users.of(req.uid).alterDesc(desc => {
+        return { ...desc!, name }
+    })
+    res.json(desc)
 })
 
 const nonces: { [uid in string]: number } = {}
-const msgLock = new RWLock()
 app.post('/messages', async (req, res) => {
     const body = validateRequestBody(req.body)
     const to = body.to
@@ -109,22 +110,23 @@ app.post('/messages', async (req, res) => {
         return res.json({})
 
     const { key, members } = await prepareFromTo(req.uid, to)
-    await msgLock.wLock("receive", async () => {
-        const ts = uniqueTimestamp()
+
+    const msg = await msgd.dispatch<Message.Regular>(async ts => {
         const i = await msgs.of(key).save({
             f: req.uid,
             c: content,
             t: ts
         })
-        if (!i && to.startsWith('@')) {
-            const peer = to.slice(1)
-            await Promise.all([
-                users.of(req.uid).addPeer(peer),
-                users.of(peer).addPeer(req.uid)])
-        }
-        msgd.dispatch({ i, from: req.uid, to, content, ts }, members)
-        res.json({ i })
-    })
+        return { i, from: req.uid, to, content, ts }
+    }, members)
+
+    if (!msg.i && to.startsWith('@')) {
+        const peer = to.slice(1)
+        await Promise.all([
+            users.of(req.uid).addPeer(peer),
+            users.of(peer).addPeer(req.uid)])
+    }
+    res.json({ i: msg.i })
     nonces[req.uid] = nonce
 })
 
@@ -175,44 +177,52 @@ app.post('/channels', async (req, res) => {
     const body = validateRequestBody(req.body)
     const name = sanitizeName(body.name)
     const ch = await chns.create(req.uid, name)
-    await ch.addMember(req.uid)
-    await users.of(req.uid).joinChannel(ch.id)
+    await ch.alterMembers(list => {
+        if (!list)
+            return [{ uid: req.uid }]
+        return list.find(v => v.uid === req.uid) ? list : [...list, { uid: req.uid }]
+    })
+
+    await users.of(req.uid).alterChannels(list => {
+        if (!list)
+            return [{ cid: ch.id }]
+        return list.find(v => v.cid === ch.id) ? list : [...list, { cid: ch.id }]
+    })
     res.json({ cid: ch.id })
 })
 
 // join channel
 app.post('/channels/:cid', async (req, res) => {
     const cid = validateCID(req.params.cid)
-    if (!await chns.exists(cid))
-        throw new Forbidden('channel not found')
-    const members = await chns.of(cid).addMember(req.uid)
-    await users.of(req.uid).joinChannel(cid)
+    await chns.of(cid).alterMembers(list => {
+        if (!list)
+            throw new Forbidden('channel not found')
+        return list.find(v => v.uid === req.uid) ? list : [...list, { uid: req.uid }]
+    })
 
-    msgd.dispatch({
-        event: 'join',
-        src: req.uid,
-        target: cid,
-        ts: Date.now()
-    }, members.map(v => v.uid))
-    res.json(members)
+    await users.of(req.uid).alterChannels(list => {
+        if (!list)
+            return [{ cid: cid }]
+        return list.find(v => v.cid === cid) ? list : [...list, { cid }]
+    })
+    // TODO: dispatch event
+    res.json({})
 })
 
 // leave channel
 app.delete('/channels/:cid', async (req, res) => {
     const cid = validateCID(req.params.cid)
-    if (!await chns.exists(cid))
-        throw new Forbidden('channel not found')
-    const members = await chns.of(cid).removeMember(req.uid)
-    await users.of(req.uid).leaveChannel(cid)
+    await chns.of(cid).alterMembers(list => {
+        if (!list)
+            throw new Forbidden('channel not found')
+        return list.filter(v => v.uid != req.uid)
+    })
 
-
-    msgd.dispatch({
-        event: 'leave',
-        src: req.uid,
-        target: cid,
-        ts: Date.now()
-    }, members.map(v => v.uid))
-    res.json(members)
+    await users.of(req.uid).alterChannels(list => {
+        return (list || []).filter(v => v.cid != cid)
+    })
+    // TODO: dispatch event
+    res.json({})
 })
 
 // get member list
@@ -234,15 +244,15 @@ app.put('/channels/:cid/desc', async (req, res) => {
     const body = validateRequestBody(req.body)
     const cid = validateCID(req.params.cid)
     const name = sanitizeName(body.name)
-
-    const ch = chns.of(cid)
-    const desc = await ch.desc()
-    if (!desc || desc.creator !== req.uid)
-        throw new Forbidden('not allowed')
-
-    res.json(await ch.updateDesc(name))
+    const desc = await chns.of(cid).alterDesc(desc => {
+        if (!desc || desc.creator !== req.uid)
+            throw new Forbidden('not allowed')
+        return { ...desc, name }
+    })
+    res.json(desc)
 })
 
+// error handling
 app.use(((err, req, res, next) => {
     if (err.status) {
         res.status(err.status).json({ error: err.message })

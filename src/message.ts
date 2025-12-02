@@ -1,5 +1,5 @@
 import { Database } from './database'
-import { Signal, sleep } from './util'
+import { RWLock, Signal, sleep } from './util'
 
 export namespace Message {
 
@@ -25,26 +25,25 @@ export namespace Message {
         ts: number
     }
 
-    class Queue<T extends object> {
-        private msgs: { msg: T, t: number }[] = []
-        private headPos = 0
-        private activeTs = Date.now()
+    type WithTS = { ts: number }
 
-        readonly signal = new Signal()
+    class Queue<T extends WithTS> {
+        private msgs: T[] = []
+        private activeTs = Date.now()
+        private readonly signal = new Signal()
         constructor(dispose: () => void) {
             // housekeeping
             (async () => {
                 for (; ;) {
-                    await sleep(1000 * 5)
+                    await sleep(60 * 60 * 1000)
                     const now = Date.now()
-                    if (now > this.activeTs + 60 * 1000) {
+                    if (now > this.activeTs + 2 * 24 * 60 * 60 * 1000) { // no activity in 2 days
                         dispose()
                         return
                     }
 
                     const len = this.msgs.length
-                    if (len > 1000 && now > this.msgs[len >> 1].t + 60 * 60 * 1000) {
-                        this.headPos += (len >> 1)
+                    if (len > 20000 || (len > 1000 && now > this.msgs[len >> 1].ts + 24 * 60 * 60 * 1000)) {
                         this.msgs = this.msgs.slice(len >> 1)
                     }
                 }
@@ -52,34 +51,46 @@ export namespace Message {
         }
 
         add(msg: T) {
-            this.msgs.push({ msg, t: Date.now() })
+            this.msgs.push(msg)
             this.signal.signal()
         }
 
         get(since: number, limit: number) {
             this.activeTs = Date.now()
 
-            since = Math.min(
-                Math.max(since, this.headPos),
-                this.headPos + this.msgs.length)
+            const len = this.msgs.length
+            if (!len) return []
+            if (since > this.msgs[len - 1].ts) return []
 
-            const msgs = this.msgs
-                .slice(since - this.headPos, limit)
-                .map(v => v.msg)
-            return {
-                msgs,
-                next: since + msgs.length
+            let l = -1, r = len
+            while (l + 1 != r) {
+                const m = (l + r) >> 1
+                if (since < this.msgs[m].ts)
+                    r = m
+                else
+                    l = m
             }
+            return this.msgs.slice(r, limit)
         }
+
+        hasNew() { return this.signal.wait() }
     }
 
 
-    export class Dispatcher<T extends object> {
+    export class Dispatcher<T extends WithTS> {
         private readonly queues: { [topic in string]?: Queue<T> } = {}
+        private lock = new RWLock()
+        private lastTs = 0
 
-        dispatch(msg: T, tos: string[]) {
-            for (const to of new Set(tos))
-                this.queues[to]?.add(msg)
+        dispatch<U extends T>(build: (ts: number) => Promise<U> | U, tos: string[]) {
+            // why? to keep ts of queued msgs in order
+            return this.lock.wLock('', async () => {
+                const ts = this.lastTs = Math.max(Date.now(), this.lastTs + 1)
+                const msg = await build(ts)
+                for (const to of new Set(tos))
+                    this.queues[to]?.add(msg)
+                return msg
+            })
         }
 
         get(to: string) {
@@ -90,9 +101,9 @@ export namespace Message {
             }
             return {
                 async pull(since: number, limit: number, timeout: number) {
-                    const r = s.get(since, limit)
-                    if (r.msgs.length) return r
-                    await Promise.race([sleep(timeout), s.signal.wait()])
+                    const msgs = s.get(since, limit)
+                    if (msgs.length) return msgs
+                    await Promise.race([sleep(timeout), s.hasNew()])
                     return s.get(since, limit)
                 }
             }
@@ -115,13 +126,10 @@ export namespace Message {
         of(key: string) {
             const s = this.db.list(key)
             return {
-                async count() {
-                    return s.count()
-                },
+                async count() { return s.count() },
                 async save(msg: T) {
-                    const i = await s.count()
-                    await s.append(msg)
-                    return i
+                    const n = await s.append(msg)
+                    return n - 1
                 },
                 async query(start: number, limit: number) {
                     const list = await s.range(start, limit)

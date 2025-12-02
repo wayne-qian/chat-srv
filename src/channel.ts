@@ -1,11 +1,12 @@
 import Crypto from 'crypto'
 import { Database } from './database'
 
-
+import Desc = Channel.Desc
+import Member = Channel.Member
 
 export class Channel {
     private readonly db
-    constructor(readonly id: string, db: Channel.Service['db']) {
+    constructor(readonly id: string, db: Service['db']) {
         this.db = {
             desc: db.desc(id),
             members: db.members(id),
@@ -14,27 +15,15 @@ export class Channel {
     desc() {
         return this.db.desc.read()
     }
-    updateDesc(name: string) {
-        return this.db.desc.alter(desc => {
-            return { ...desc!, name }
-        })
+    alterDesc(f: (desc: Desc | null) => Desc) {
+        return this.db.desc.alter(f)
     }
-    async members() {
-        return await this.db.members.read()
+
+    members() {
+        return this.db.members.read()
     }
-    addMember(uid: string) {
-        return this.db.members.alter(list => {
-            if (!list)
-                return [{ uid }]
-            return list.find(v => v.uid == uid) ? list : [...list, { uid }]
-        })
-    }
-    removeMember(uid: string) {
-        return this.db.members.alter(list => {
-            if (!list)
-                return []
-            return list.filter(v => v.uid !== uid)
-        })
+    alterMembers(f: (list: Member[] | null) => Member[]) {
+        return this.db.members.alter(f)
     }
 }
 
@@ -44,7 +33,7 @@ export namespace Channel {
         creator: string
         name: string
     }
-    type Member = { uid: string }
+    export type Member = { uid: string }
 
     export class Service {
         private readonly db
@@ -74,3 +63,4 @@ export namespace Channel {
     }
 }
 
+import Service = Channel.Service
