@@ -2,13 +2,16 @@
     "compilerOptions": {
         "module": "commonjs",
         "esModuleInterop": true,
-        "target": "es6",
+        "target": "ES2021",
         "rootDir": "./src",
         "outDir": "./dist",
         "strict": true,
-        "typeRoots": [
-            "@types",
-            "./node_modules/@types"
-        ]
+        /* Experimental Options */
+        "experimentalDecorators": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true        
+    },
+    "ts-node": {
+        "files": true
     }
 }

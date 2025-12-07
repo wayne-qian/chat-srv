@@ -2,11 +2,11 @@
   "name": "chat-srv",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/app.js",
   "scripts": {
-    "dev": "nodemon src/app.ts",
-    "build": "tsc",
-    "start": "tsc && node dist/app.js"
+    "dev": "nodemon",
+    "build": "tsoa spec-and-routes && tsc",
+    "start": "node dist/app.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,14 +16,18 @@
     "@types/express": "^5.0.5",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.9.2",
+    "@types/swagger-ui-express": "^4.1.8",
+    "concurrently": "^9.2.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsoa": "^6.6.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "swagger-ui-express": "^5.0.1"
   }
 }

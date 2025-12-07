@@ -28,3 +28,9 @@ export class Forbidden extends ErrorWithStatus {
         super(message, 403)
     }
 }
+
+export class NotFound extends ErrorWithStatus {
+    constructor(message = 'not found') {
+        super(message, 404)
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "entryFile": "src/app.ts",
+    "noImplicitAdditionalProperties": "throw-on-extras",
+    "controllerPathGlobs": [
+        "src/controllers/*.ts"
+    ],
+    "spec": {
+        "outputDirectory": "src",
+        "specVersion": 3,
+        "securityDefinitions": {
+            "api_key": {
+                "type": "apiKey",
+                "name": "xToken",
+                "in": "header"
+            }
+        },
+        "tags": [
+            {
+                "name": "User",
+                "description": "Operations about users"
+            },
+            {
+                "name": "Channel",
+                "description": "Operations for channels"
+            },
+            {
+                "name": "Message",
+                "description": "Operations for messages"
+            }
+        ]
+    },
+    "routes": {
+        "routesDir": "src",
+        "authenticationModule": "src/controllers/user.ts"
+    }
+}
