@@ -17,24 +17,34 @@ type Timestamp = number
 namespace User {
     /**
      * @pattern ^[a-z][a-z0-9]*$
-     * @example "qwy"
+     * @example "wangcai"
      */
     export type ID = string
+
     /**
      * @minLength 6 password too short
      * @maxLength 20 password too long
+     * @example "aStrongPassword"
      */
     export type Password = string
+
     /**
      * @pattern ^[a-zA-Z][a-zA-Z0-9]*$ invalid uid
      * @minLength 3 uid too short
      * @maxLength 16 uid too long
-     * @example "qwy"
+     * @example "WangCai"
      */
     export type UserInputID = string
 
     export interface Create {
         uid: UserInputID
+
+        /**
+         * @minLength 1
+         * @maxLength 20
+         * @example "旺财"
+         */
+        name?: string
         password: Password
     }
 
@@ -72,6 +82,12 @@ namespace User {
     }
     export interface PeerListItem {
         uid: ID
+    }
+
+    export interface Stats {
+        user: Int
+        channel: Int
+        online: Int
     }
 }
 

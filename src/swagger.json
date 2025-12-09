@@ -7,156 +7,18 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"User.ID": {
+			"Channel.ID": {
 				"type": "string",
-				"example": "qwy",
-				"pattern": "^[a-z][a-z0-9]*$"
+				"pattern": "^[a-f0-9]+$"
 			},
 			"Timestamp": {
 				"type": "integer",
 				"format": "int64"
 			},
-			"User.Desc": {
-				"properties": {
-					"uid": {
-						"$ref": "#/components/schemas/User.ID"
-					},
-					"name": {
-						"type": "string"
-					},
-					"createdAt": {
-						"$ref": "#/components/schemas/Timestamp"
-					}
-				},
-				"required": [
-					"uid",
-					"name",
-					"createdAt"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User.CreateResp": {
-				"properties": {
-					"desc": {
-						"$ref": "#/components/schemas/User.Desc"
-					},
-					"token": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"desc",
-					"token"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User.UserInputID": {
+			"User.ID": {
 				"type": "string",
-				"example": "qwy",
-				"pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
-				"minLength": 3,
-				"maxLength": 16
-			},
-			"User.Password": {
-				"type": "string",
-				"minLength": 6,
-				"maxLength": 20
-			},
-			"User.Create": {
-				"properties": {
-					"uid": {
-						"$ref": "#/components/schemas/User.UserInputID"
-					},
-					"password": {
-						"$ref": "#/components/schemas/User.Password"
-					}
-				},
-				"required": [
-					"uid",
-					"password"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User.CreateToken": {
-				"properties": {
-					"uid": {
-						"$ref": "#/components/schemas/User.UserInputID"
-					},
-					"password": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"uid",
-					"password"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Pick_User.CreateResp.Exclude_keyofUser.CreateResp.desc__": {
-				"properties": {
-					"token": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"token"
-				],
-				"type": "object",
-				"description": "From T, pick a set of properties whose keys are in the union K"
-			},
-			"Omit_User.CreateResp.desc_": {
-				"$ref": "#/components/schemas/Pick_User.CreateResp.Exclude_keyofUser.CreateResp.desc__",
-				"description": "Construct a type with the properties of T except for those in type K."
-			},
-			"User.UpdatePassword": {
-				"properties": {
-					"password": {
-						"type": "string"
-					},
-					"newPassword": {
-						"$ref": "#/components/schemas/User.Password"
-					}
-				},
-				"required": [
-					"password",
-					"newPassword"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User.UpdateDesc": {
-				"properties": {
-					"name": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 30
-					}
-				},
-				"required": [
-					"name"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User.PeerListItem": {
-				"properties": {
-					"uid": {
-						"$ref": "#/components/schemas/User.ID"
-					}
-				},
-				"required": [
-					"uid"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Channel.ID": {
-				"type": "string",
-				"pattern": "^[a-f0-9]+$"
+				"example": "wangcai",
+				"pattern": "^[a-z][a-z0-9]*$"
 			},
 			"Channel.Desc": {
 				"properties": {
@@ -366,6 +228,171 @@
 			"Omit_Message.Common.to_": {
 				"$ref": "#/components/schemas/Pick_Message.Common.Exclude_keyofMessage.Common.to__",
 				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"User.Stats": {
+				"properties": {
+					"user": {
+						"$ref": "#/components/schemas/Int"
+					},
+					"channel": {
+						"$ref": "#/components/schemas/Int"
+					},
+					"online": {
+						"$ref": "#/components/schemas/Int"
+					}
+				},
+				"required": [
+					"user",
+					"channel",
+					"online"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.Desc": {
+				"properties": {
+					"uid": {
+						"$ref": "#/components/schemas/User.ID"
+					},
+					"name": {
+						"type": "string"
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Timestamp"
+					}
+				},
+				"required": [
+					"uid",
+					"name",
+					"createdAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.CreateResp": {
+				"properties": {
+					"desc": {
+						"$ref": "#/components/schemas/User.Desc"
+					},
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"desc",
+					"token"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.UserInputID": {
+				"type": "string",
+				"example": "WangCai",
+				"pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
+				"minLength": 3,
+				"maxLength": 16
+			},
+			"User.Password": {
+				"type": "string",
+				"example": "aStrongPassword",
+				"minLength": 6,
+				"maxLength": 20
+			},
+			"User.Create": {
+				"properties": {
+					"uid": {
+						"$ref": "#/components/schemas/User.UserInputID"
+					},
+					"name": {
+						"type": "string",
+						"example": "旺财",
+						"minLength": 1,
+						"maxLength": 20
+					},
+					"password": {
+						"$ref": "#/components/schemas/User.Password"
+					}
+				},
+				"required": [
+					"uid",
+					"password"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.CreateToken": {
+				"properties": {
+					"uid": {
+						"$ref": "#/components/schemas/User.UserInputID"
+					},
+					"password": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"uid",
+					"password"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_User.CreateResp.Exclude_keyofUser.CreateResp.desc__": {
+				"properties": {
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"token"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_User.CreateResp.desc_": {
+				"$ref": "#/components/schemas/Pick_User.CreateResp.Exclude_keyofUser.CreateResp.desc__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"User.UpdatePassword": {
+				"properties": {
+					"password": {
+						"type": "string"
+					},
+					"newPassword": {
+						"$ref": "#/components/schemas/User.Password"
+					}
+				},
+				"required": [
+					"password",
+					"newPassword"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.UpdateDesc": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 30
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User.PeerListItem": {
+				"properties": {
+					"uid": {
+						"$ref": "#/components/schemas/User.ID"
+					}
+				},
+				"required": [
+					"uid"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -385,233 +412,6 @@
 		"contact": {}
 	},
 	"paths": {
-		"/users": {
-			"post": {
-				"operationId": "Create",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User.CreateResp"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Register a new user.",
-				"tags": [
-					"User"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/User.Create"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/tokens": {
-			"post": {
-				"operationId": "CreateToken",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User.CreateResp"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Create an access token, or say login.",
-				"tags": [
-					"User"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/User.CreateToken"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/users/{uid}/desc": {
-			"get": {
-				"operationId": "GetDescByID",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User.Desc"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Get description of the user specified by id.",
-				"tags": [
-					"User"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"$ref": "#/components/schemas/User.ID"
-						}
-					}
-				]
-			}
-		},
-		"/password": {
-			"put": {
-				"operationId": "UpdatePassword",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Omit_User.CreateResp.desc_"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Update the password of the current user.",
-				"tags": [
-					"User"
-				],
-				"security": [
-					{
-						"api_key": []
-					}
-				],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/User.UpdatePassword"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/desc": {
-			"get": {
-				"operationId": "GetDesc",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User.Desc"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Get description of the current user.",
-				"tags": [
-					"User"
-				],
-				"security": [
-					{
-						"api_key": []
-					}
-				],
-				"parameters": []
-			},
-			"put": {
-				"operationId": "UpdateDesc",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User.Desc"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Update description of the current user.",
-				"tags": [
-					"User"
-				],
-				"security": [
-					{
-						"api_key": []
-					}
-				],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/User.UpdateDesc"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/peers": {
-			"get": {
-				"operationId": "GetPeers",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/User.PeerListItem"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"summary": "Get a list of users who ever privately chatted with the current user.",
-				"tags": [
-					"User"
-				],
-				"security": [
-					{
-						"api_key": []
-					}
-				],
-				"parameters": []
-			}
-		},
 		"/channels": {
 			"post": {
 				"operationId": "Create",
@@ -939,6 +739,7 @@
 				],
 				"parameters": [
 					{
+						"description": "the time after which",
 						"in": "query",
 						"name": "since",
 						"required": true,
@@ -947,9 +748,10 @@
 						}
 					},
 					{
+						"description": "max count of records returned. Defaults to 10.",
 						"in": "query",
 						"name": "limit",
-						"required": true,
+						"required": false,
 						"schema": {
 							"$ref": "#/components/schemas/Int"
 						}
@@ -1004,15 +806,265 @@
 						}
 					},
 					{
-						"description": "max count of records returned",
+						"description": "max count of records returned. Defaults to 10.",
 						"in": "query",
 						"name": "limit",
-						"required": true,
+						"required": false,
 						"schema": {
 							"$ref": "#/components/schemas/Int"
 						}
 					}
 				]
+			}
+		},
+		"/misc/stats": {
+			"get": {
+				"operationId": "GetStats",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.Stats"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Get system statistics.",
+				"tags": [
+					"Misc"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/users": {
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.CreateResp"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Register a new user.",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/User.Create"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tokens": {
+			"post": {
+				"operationId": "CreateToken",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.CreateResp"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Create an access token, or say login.",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/User.CreateToken"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{uid}/desc": {
+			"get": {
+				"operationId": "GetDescByID",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.Desc"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Get description of the user specified by id.",
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/User.ID"
+						}
+					}
+				]
+			}
+		},
+		"/password": {
+			"put": {
+				"operationId": "UpdatePassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Omit_User.CreateResp.desc_"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Update the password of the current user.",
+				"tags": [
+					"User"
+				],
+				"security": [
+					{
+						"api_key": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/User.UpdatePassword"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/desc": {
+			"get": {
+				"operationId": "GetDesc",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.Desc"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Get description of the current user.",
+				"tags": [
+					"User"
+				],
+				"security": [
+					{
+						"api_key": []
+					}
+				],
+				"parameters": []
+			},
+			"put": {
+				"operationId": "UpdateDesc",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User.Desc"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Update description of the current user.",
+				"tags": [
+					"User"
+				],
+				"security": [
+					{
+						"api_key": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/User.UpdateDesc"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/peers": {
+			"get": {
+				"operationId": "GetPeers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/User.PeerListItem"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Get a list of users who ever privately chatted with the current user.",
+				"tags": [
+					"User"
+				],
+				"security": [
+					{
+						"api_key": []
+					}
+				],
+				"parameters": []
 			}
 		}
 	},

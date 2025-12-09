@@ -18,8 +18,8 @@ app.use(
 );
 app.use(Express.json());
 
-app.get('/', async (req, res) => {
-    res.send('This is the chat server!');
+app.get('/', async (req, res) => {    
+    res.send('This is the chat server! <a href="./docs">API docs</a>');
 });
 
 app.use('/docs',

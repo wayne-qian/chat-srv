@@ -3,6 +3,7 @@ import { Conflict, Forbidden, NotFound } from "../error";
 import { Service } from '../services/channel'
 import { db } from '../database'
 import { dispatcher } from './message'
+import { miscs } from './misc'
 
 export const chns = new Service(db)
 
@@ -28,6 +29,7 @@ export class ChannelController extends Controller {
             return [...list || [], { cid: ch.id }]
         })
         const desc = await ch.desc()
+        await miscs.addChannelCount()
         return { ...desc!, cid: ch.id }
     }
 

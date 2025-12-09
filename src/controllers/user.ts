@@ -3,6 +3,7 @@ import { Service } from '../services/user'
 import { db } from '../database'
 import { NotFound, Unauthorized } from '../error'
 import Express from 'express'
+import { miscs } from './misc'
 
 export const users = new Service(db)
 
@@ -19,10 +20,11 @@ export class UserWithoutSecController extends Controller {
         const u = await users.create(
             body.uid.toLowerCase(),
             body.password,
-            body.uid)
+            body.name || body.uid)
 
         const desc = await u.desc()
         const token = await users.newToken(u.id)
+        await miscs.addUserCount()
         return {
             desc: { ...desc!, uid: u.id },
             token: token!

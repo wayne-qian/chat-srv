@@ -3,13 +3,23 @@ import { Dispatcher, Persist } from "../services/message";
 import { db } from "../database";
 import { users } from './user'
 import { chns } from './channel'
-import { Forbidden } from "../error";
+import { Forbidden } from "../error"
+import NodeCache from 'node-cache'
 
 export const dispatcher = new Dispatcher<Message.Common | Message.Event>()
 const persist = new Persist<Compacted>(db)
 
-const nonces: { [uid in string]: { nonce: number, i: number } } = {}
+type Online = {
+    nonce: number
+    i: number
+}
 
+const onlineTTL = 5 * 60
+const onlines = new NodeCache({ stdTTL: onlineTTL, checkperiod: onlineTTL * 2 })
+
+export function onlineCount() {
+    return onlines.getStats().keys
+}
 
 type Compacted = {
     f: string // from
@@ -29,9 +39,9 @@ export class MessageController extends Controller {
         @Body() body: Message.Post,
         @Request() req: Express.Request
     ): Promise<Message.PostResp> {
-        const nonceRec = nonces[req.user.id]
-        if (nonceRec && nonceRec.nonce == body.nonce)
-            return { i: nonceRec.i }
+        const rec = onlines.get<Online>(req.user.id)
+        if (rec && rec.nonce == body.nonce)
+            return { i: rec.i }
 
         const { key, members } = await prepareFromTo(req.user.id, body.to)
         const msg = await dispatcher.dispatch<Message.Common>(members, async ts => {
@@ -49,19 +59,26 @@ export class MessageController extends Controller {
                 users.of(req.user.id).addPeer(peer),
                 users.of(peer).addPeer(req.user.id)])
         }
-        nonces[req.user.id] = { nonce: body.nonce, i: msg.i }
+        onlines.set<Online>(req.user.id, { nonce: body.nonce, i: msg.i })
         return { i: msg.i }
     }
 
     /**
      * @summary Pull new messages for the current user.
+     * 
+     * @param since the time after which
+     * @param limit max count of records returned. Defaults to 10.
      */
     @Get()
     async getMessages(
         @Query() since: Timestamp,
-        @Query() limit: Int,
+        @Query() limit: Int = 10,
         @Request() req: Express.Request
     ): Promise<(Message.Common | Message.Event)[]> {
+
+        if (!onlines.ttl(req.user.id))
+            onlines.set<Online>(req.user.id, { nonce: NaN, i: NaN })
+
         const result = await dispatcher.get(req.user.id)
             .pull(since, Math.min(limit, 100), 10 * 1000)
         return result
@@ -72,13 +89,13 @@ export class MessageController extends Controller {
      * 
      * @param _with channel id or \@\{user id\}
      * @param start the index start from 0
-     * @param limit max count of records returned
+     * @param limit max count of records returned. Defaults to 10.
      */
     @Get('{with}')
     async getMessagesWith(
         @Path('with') _with: Message.To,
         @Query() start: Int,
-        @Query() limit: Int,
+        @Query() limit: Int = 10,
         @Request() req: Express.Request
     ): Promise<Omit<Message.Common, 'to'>[]> {
         const { key } = await prepareFromTo(req.user.id, _with)
