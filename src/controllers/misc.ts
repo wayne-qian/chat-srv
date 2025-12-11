@@ -1,7 +1,11 @@
-import { Controller, Get, Route, Tags } from "tsoa";
+import { Controller, Get, Route, Tags, Request } from "tsoa";
 import { Service } from '../services/misc'
 import { db } from '../database'
 import { onlineCount } from "./message";
+import Express from 'express'
+import { getClientIp } from 'get-client-ip'
+import { URL } from 'url'
+
 export const miscs = new Service(db)
 
 @Route('misc')
@@ -11,7 +15,7 @@ export class MiscController extends Controller {
      * @summary Get system statistics.
      */
     @Get('stats')
-    async getStats(): Promise<User.Stats> {
+    async getStats(): Promise<Misc.Stats> {
         const s = await miscs.stats()
         if (!s) return {
             user: 0,
@@ -19,5 +23,23 @@ export class MiscController extends Controller {
             online: onlineCount()
         }
         return { ...s, online: onlineCount() }
+    }
+
+    /**
+     * @summary Track visit counts of external websites.
+     */
+    @Get('visits')
+    async getVisitCount(@Request() req: Express.Request): Promise<Misc.Visits> {
+        const origin = req.headers.origin
+        if (origin) {
+            const u = new URL(origin)
+            if (u.hostname)
+                return await miscs.visits(u.hostname, getClientIp(req) || '::1')
+        }
+        return {
+            total: 0,
+            day: 0,
+            week: 0
+        }
     }
 }

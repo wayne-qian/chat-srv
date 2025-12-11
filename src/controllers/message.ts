@@ -15,7 +15,7 @@ type Online = {
 }
 
 const onlineTTL = 5 * 60
-const onlines = new NodeCache({ stdTTL: onlineTTL, checkperiod: onlineTTL * 2 })
+const onlines = new NodeCache({ stdTTL: onlineTTL * 2, checkperiod: onlineTTL })
 
 export function onlineCount() {
     return onlines.getStats().keys

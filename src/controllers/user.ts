@@ -24,7 +24,7 @@ export class UserWithoutSecController extends Controller {
 
         const desc = await u.desc()
         const token = await users.newToken(u.id)
-        await miscs.addUserCount()
+        await miscs.updateStats(1, 0)
         return {
             desc: { ...desc!, uid: u.id },
             token: token!
@@ -107,9 +107,7 @@ export class UserController extends Controller {
         @Request() req: Express.Request
     ): Promise<User.Desc> {
         const u = req.user
-        const desc = await u.alterDesc(desc => {
-            return { ...desc!, name: body.name }
-        })
+        const { newObj: desc } = await u.updateDesc(body.name)
         return { ...desc, uid: u.id }
     }
 

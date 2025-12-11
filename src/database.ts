@@ -125,9 +125,10 @@ export class Table {
                     const s = await readStr(path)
                     const newObj = f(s ? JSON.parse(s) : null)
                     const newS = JSON.stringify(newObj)
-                    if (s !== newS)
+                    const updated = s !== newS
+                    if (updated)
                         await writeStr(path, newS)
-                    return newObj
+                    return { newObj, updated }
                 })
             }
         }
@@ -201,7 +202,7 @@ export class Table {
 }
 
 export class Database {
-    constructor(readonly dir: string) {      
+    constructor(readonly dir: string) {
     }
 
     table(name: string) {

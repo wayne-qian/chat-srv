@@ -1,7 +1,7 @@
 import Crypto from 'crypto'
 import { Conflict } from '../error'
 import { Database } from '../database'
-import { validateUID, validateToken } from './validate'
+import { validateUID, validateToken, validateCID } from './validate'
 export interface Desc {
     createdAt: number
     name: string
@@ -52,9 +52,13 @@ export class User {
     auth() {
         return this.db.auth.read()
     }
-    alterDesc(f: (desc: Desc | null) => Desc) {
-        return this.db.desc.alter(f)
+
+    updateDesc(name: string) {
+        return this.db.desc.alter(desc => {
+            return { ...desc!, name }
+        })
     }
+
     updatePassword(pass: string) {
         return this.db.auth.write(buildAuth(this.id, pass))
     }
@@ -62,8 +66,20 @@ export class User {
         return this.db.channels.read()
     }
 
-    alterChannels(f: (list: ChannelListItem[] | null) => ChannelListItem[]) {
-        return this.db.channels.alter(f)
+    addChannel(cid: string) {
+        validateCID(cid)
+        return this.db.channels.alter(list => {
+            if (!list) return [{ cid }]
+            return list.find(v => v.cid === cid) ? list : [...list, { cid }]
+        })
+    }
+
+    removeChannel(cid: string) {
+        validateCID(cid)
+        return this.db.channels.alter(list => {
+            if (!list) return []
+            return list.filter(v => v.cid !== cid)
+        })
     }
 
     peers() {
@@ -71,6 +87,7 @@ export class User {
     }
 
     addPeer(uid: string) {
+        validateUID(uid)
         return this.db.peers.alter(list => {
             if (!list)
                 return [{ uid }]

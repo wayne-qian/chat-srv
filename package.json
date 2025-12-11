@@ -24,6 +24,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "get-client-ip": "^3.0.4",
     "lru-cache": "^11.2.4",
     "morgan": "^1.10.1",
     "node-cache": "^5.1.2",

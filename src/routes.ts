@@ -147,12 +147,22 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"Pick_Message.Common.Exclude_keyofMessage.Common.to__","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "User.Stats": {
+    "Misc.Stats": {
         "dataType": "refObject",
         "properties": {
             "user": {"ref":"Int","required":true},
             "channel": {"ref":"Int","required":true},
             "online": {"ref":"Int","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Misc.AccessCount": {
+        "dataType": "refObject",
+        "properties": {
+            "total": {"ref":"Int","required":true},
+            "day": {"ref":"Int","required":true},
+            "week": {"ref":"Int","required":true},
         },
         "additionalProperties": false,
     },
@@ -597,6 +607,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getStats',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMiscController_getAccountCount: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/misc/access-count',
+            ...(fetchMiddlewares<RequestHandler>(MiscController)),
+            ...(fetchMiddlewares<RequestHandler>(MiscController.prototype.getAccountCount)),
+
+            async function MiscController_getAccountCount(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMiscController_getAccountCount, request, response });
+
+                const controller = new MiscController();
+
+              await templateService.apiHandler({
+                methodName: 'getAccountCount',
                 controller,
                 response,
                 next,

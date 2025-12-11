@@ -21,15 +21,10 @@ export class ChannelController extends Controller {
         @Request() req: Express.Request
     ): Promise<Channel.Desc> {
         const ch = await chns.create(req.user.id, body.name)
-        await ch.alterMembers(_ => {
-            return [{ uid: req.user.id }]
-        })
+        await req.user.addChannel(ch.id)
 
-        await req.user.alterChannels(list => {
-            return [...list || [], { cid: ch.id }]
-        })
         const desc = await ch.desc()
-        await miscs.addChannelCount()
+        await miscs.updateStats(0, 1)
         return { ...desc!, cid: ch.id }
     }
 
@@ -52,8 +47,7 @@ export class ChannelController extends Controller {
         @Path() cid: Channel.ID
     ): Promise<Channel.Desc> {
         const desc = await chns.of(cid).desc()
-        if (!desc)
-            throw new NotFound('channel not found')
+        if (!desc) throw new NotFound('channel not found')
         return { ...desc, cid }
     }
 
@@ -67,23 +61,21 @@ export class ChannelController extends Controller {
         @Request() req: Express.Request
     ): Promise<Channel.Desc> {
         const ch = chns.of(cid)
-        const desc = await ch.alterDesc(desc => {
-            if (!desc)
-                throw new NotFound('channel not found')
-            if (desc.creator !== req.user.id)
-                throw new Forbidden('not allowed')
-            return { ...desc, name: body.name }
-        })
+        const { newObj: desc, updated } = await ch.updateDesc(req.user.id, body.name)
 
-        const members = await ch.members() || []
-        await dispatcher.dispatch<Message.Event>(members.map(v => v.uid), ts => {
-            return {
-                event: 'channel',
-                to: cid,
-                from: req.user.id,
-                ts
+        if (updated) {
+            const members = await ch.members()
+            if (members && members.length) {
+                await dispatcher.dispatch<Message.Event>(members.map(v => v.uid), ts => {
+                    return {
+                        event: 'channel',
+                        to: cid,
+                        from: req.user.id,
+                        ts
+                    }
+                })
             }
-        })
+        }
         return { ...desc, cid }
     }
 
@@ -110,25 +102,12 @@ export class ChannelController extends Controller {
     async join(
         @Path() cid: Channel.ID,
         @Request() req: Express.Request
-    ) {
-        let eventReceivers: string[] | undefined
-        await chns.of(cid).alterMembers(list => {
-            if (!list)
-                throw new NotFound('channel not found')
-            if (list.find(v => v.uid === req.user.id))
-                throw new Conflict('already in channel')
-            eventReceivers = list.map(v => v.uid)
-            return [...list, { uid: req.user.id }]
-        })
+    ): Promise<{}> {
+        const { newObj: members, updated } = await chns.of(cid).addMember(req.user.id)
+        await req.user.addChannel(cid)
 
-        await req.user.alterChannels(list => {
-            if (!list)
-                return [{ cid: cid }]
-            return list.find(v => v.cid === cid) ? list : [...list, { cid }]
-        })
-
-        if (eventReceivers && eventReceivers.length) {
-            await dispatcher.dispatch<Message.Event>(eventReceivers, ts => {
+        if (updated) {
+            await dispatcher.dispatch<Message.Event>(members.map(v => v.uid), ts => {
                 return {
                     event: 'join',
                     to: cid,
@@ -146,24 +125,12 @@ export class ChannelController extends Controller {
     async leave(
         @Path() cid: Channel.ID,
         @Request() req: Express.Request
-    ) {
-        let eventReceivers: string[] | undefined
-        await chns.of(cid).alterMembers(list => {
-            if (!list)
-                throw new NotFound('channel not found')
-            const newList = list.filter(v => v.uid != req.user.id)
-            if (newList.length == list.length)
-                throw new Forbidden('not in channel')
-            eventReceivers = newList.map(v => v.uid)
-            return newList
-        })
+    ): Promise<{}> {
+        const { newObj: members, updated } = await chns.of(cid).removeMember(req.user.id)
+        await req.user.removeChannel(cid)
 
-        await req.user.alterChannels(list => {
-            return (list || []).filter(v => v.cid != cid)
-        })
-
-        if (eventReceivers && eventReceivers.length) {
-            await dispatcher.dispatch<Message.Event>(eventReceivers, ts => {
+        if (updated && members.length) {
+            await dispatcher.dispatch<Message.Event>(members.map(v => v.uid), ts => {
                 return {
                     event: 'leave',
                     to: cid,

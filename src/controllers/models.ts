@@ -83,12 +83,6 @@ namespace User {
     export interface PeerListItem {
         uid: ID
     }
-
-    export interface Stats {
-        user: Int
-        channel: Int
-        online: Int
-    }
 }
 
 namespace Channel {
@@ -160,3 +154,15 @@ namespace Message {
     }
 }
 
+namespace Misc {
+    export interface Stats {
+        user: Int
+        channel: Int
+        online: Int
+    }
+    export interface Visits {
+        total: Int
+        day: Int
+        week: Int
+    }
+}

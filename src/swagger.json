@@ -229,7 +229,7 @@
 				"$ref": "#/components/schemas/Pick_Message.Common.Exclude_keyofMessage.Common.to__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"User.Stats": {
+			"Misc.Stats": {
 				"properties": {
 					"user": {
 						"$ref": "#/components/schemas/Int"
@@ -245,6 +245,26 @@
 					"user",
 					"channel",
 					"online"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Misc.AccessCount": {
+				"properties": {
+					"total": {
+						"$ref": "#/components/schemas/Int"
+					},
+					"day": {
+						"$ref": "#/components/schemas/Int"
+					},
+					"week": {
+						"$ref": "#/components/schemas/Int"
+					}
+				},
+				"required": [
+					"total",
+					"day",
+					"week"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -826,13 +846,36 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/User.Stats"
+									"$ref": "#/components/schemas/Misc.Stats"
 								}
 							}
 						}
 					}
 				},
 				"summary": "Get system statistics.",
+				"tags": [
+					"Misc"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/misc/access-count": {
+			"get": {
+				"operationId": "GetAccountCount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Misc.AccessCount"
+								}
+							}
+						}
+					}
+				},
+				"summary": "Record access counts of external websites.",
 				"tags": [
 					"Misc"
 				],

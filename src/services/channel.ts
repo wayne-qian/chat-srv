@@ -1,6 +1,7 @@
 import Crypto from 'crypto'
 import { Database } from '../database'
 import { validateCID, validateUID } from './validate'
+import { Forbidden, NotFound } from '../error'
 
 export interface Desc {
     createdAt: number
@@ -20,22 +21,39 @@ export class Channel {
     desc() {
         return this.db.desc.read()
     }
-    alterDesc(f: (desc: Desc | null) => Desc) {
-        return this.db.desc.alter(f)
+
+    updateDesc(by: string, name: string) {
+        return this.db.desc.alter(desc => {
+            if (!desc || desc.creator !== by) throw new Forbidden('not allowed')
+            return { ...desc, name }
+        })
     }
 
     members() {
         return this.db.members.read()
     }
-    alterMembers(f: (list: MemberListItem[] | null) => MemberListItem[]) {
-        return this.db.members.alter(f)
+
+    addMember(uid: string) {
+        validateUID(uid)
+        return this.db.members.alter(list => {
+            if (!list) throw new Forbidden('not allowed')
+            return list.find(v => v.uid === uid) ? list : [...list, { uid }]
+        })
+    }
+
+    removeMember(uid: string) {
+        validateUID(uid)
+        return this.db.members.alter(list => {
+            if (!list) throw new Forbidden('not allowed')
+            return list.filter(v => v.uid !== uid)
+        })
     }
 }
 
 export class Service {
     private readonly db
     constructor(db: Database) {
-        const tbl  = db.table('channels')
+        const tbl = db.table('channels')
         this.db = {
             has(cid: string) { return tbl.has(`${cid}.desc`) },
             desc(cid: string) { return tbl.json<Desc>(`${cid}.desc`) },
@@ -47,8 +65,10 @@ export class Service {
         validateUID(by)
         for (; ;) {
             const cid = Crypto.randomBytes(8).toString('hex');
-            if (await this.db.desc(cid).tryWrite({ createdAt: Date.now(), creator: by, name }))
+            if (await this.db.desc(cid).tryWrite({ createdAt: Date.now(), creator: by, name })) {
+                await this.db.members(cid).write([{ uid: by }])
                 return new Channel(cid, this.db)
+            }
         }
     }
 
