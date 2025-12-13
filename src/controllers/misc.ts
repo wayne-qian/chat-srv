@@ -30,14 +30,23 @@ export class MiscController extends Controller {
      */
     @Get('visits')
     async getVisitCount(@Request() req: Express.Request): Promise<Misc.Visits> {
-        const origin = req.headers.origin
-        if (origin) {
-            const u = new URL(origin)
-            if (u.hostname)
-                return await miscs.visits(u.hostname, getClientIp(req) || '::1')
-        }
+        const hostname = (() => {
+            const origin = req.headers.origin
+            if (origin) {
+                try {
+                    const u = new URL(origin)
+                    return u.hostname
+                } catch {
+                }
+            }
+        })()
+
+        if (hostname)
+            return await miscs.visits(hostname, getClientIp(req) || '::1')
+
         return {
             total: 0,
+            hour:0,
             day: 0,
             week: 0
         }

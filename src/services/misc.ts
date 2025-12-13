@@ -10,11 +10,12 @@ export interface Stats {
 export interface Visits {
     ts: number
     total: number
+    minutes: { [i in number]: number }
     hours: { [i in number]: number }
     days: { [i in number]: number }
 }
 
-function count(delta: number, limit: number, o: Visits['hours']) {
+function count(delta: number, limit: number, o: Visits['minutes']) {
     const a: typeof o = { 0: 0 }
     for (let i = 0; i < limit; i++) {
         const c = o[delta + i]
@@ -68,16 +69,19 @@ export class Service {
                 if (!vis) {
                     return {
                         ts: Date.now(),
+                        minutes: { 0: 1 },
                         hours: { 0: 1 },
                         days: { 0: 1 },
                         total: 1
                     }
                 }
-                const dHour = Math.floor((Date.now() - vis.ts) / 3600 / 1000)
+                const dMin = Math.floor((Date.now() - vis.ts) / 1000 / 60)
+                const dHour = Math.floor(dMin / 60)
                 const dDay = Math.floor(dHour / 24)
 
                 vis.ts = Date.now()
                 vis.total++
+                vis.minutes = count(dMin, 60, vis.minutes)
                 vis.hours = count(dHour, 24, vis.hours)
                 vis.days = count(dDay, 7, vis.days)
 
@@ -88,6 +92,7 @@ export class Service {
 
         vObj = vObj || await this.db.visits(hostname).read()
         return {
+            hour: sum(vObj!.minutes),
             day: sum(vObj!.hours),
             week: sum(vObj!.days),
             total: vObj!.total

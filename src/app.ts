@@ -6,7 +6,6 @@ import { RegisterRoutes } from './routes'
 import SwaggerUi from 'swagger-ui-express'
 import SwaggerDoc from './swagger.json'
 import { ValidateError } from 'tsoa';
-import { ErrorWithStatus } from './error';
 
 const app = Express();
 app.use(Morgan('dev'))

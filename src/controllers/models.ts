@@ -162,6 +162,7 @@ namespace Misc {
     }
     export interface Visits {
         total: Int
+        hour: Int
         day: Int
         week: Int
     }
