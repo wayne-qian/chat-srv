@@ -3,7 +3,7 @@ import { Service } from '../services/misc'
 import { db } from '../database'
 import { onlineCount } from "./message";
 import Express from 'express'
-import { getClientIp } from 'get-client-ip'
+import {getClientIp} from 'request-ip'
 import { URL } from 'url'
 
 export const miscs = new Service(db)
