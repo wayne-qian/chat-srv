@@ -1,6 +1,6 @@
 import { Database } from '../database'
 import NodeCache from 'node-cache'
-import { validateHostname, validateIP } from './validate'
+import { validateHostname } from './validate'
 
 export interface Stats {
     user: number
@@ -60,7 +60,6 @@ export class Service {
 
     async visits(hostname: string, clientIP: string) {
         validateHostname(hostname)
-        validateIP(clientIP)
         const ttlKey = `${hostname}/${clientIP}`
         let vObj
         if (!this.visitTTL.ttl(ttlKey)) {
