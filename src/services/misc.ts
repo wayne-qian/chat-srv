@@ -17,10 +17,10 @@ export interface Visits {
 
 function count(delta: number, limit: number, o: Visits['minutes']) {
     const a: typeof o = { 0: 0 }
-    for (let i = 0; i < limit; i++) {
-        const c = o[delta + i]
+    for (let i = 0; i + delta < limit; i++) {
+        const c = o[i]
         if (c)
-            a[i] = c
+            a[i + delta] = c
     }
     a[0]++
     return a
