@@ -120,6 +120,23 @@ export class UserController extends Controller {
     ): Promise<User.PeerListItem[]> {
         return await req.user.peers() || []
     }
+
+    @Get('data/{key}')
+    async getData(
+        @Path() key: User.DataKey,
+        @Request() req: Express.Request
+    ): Promise<User.Data> {
+        return await req.user.data(key) || {}
+    }
+
+    @Put('data/{key}')
+    async updateData(
+        @Path() key: User.DataKey,
+        @Body() body: User.Data,
+        @Request() req: Express.Request
+    ): Promise<void> {
+        return req.user.updateData(key, body)
+    }
 }
 
 export async function expressAuthentication(

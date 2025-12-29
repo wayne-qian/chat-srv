@@ -102,7 +102,7 @@ export class ChannelController extends Controller {
     async join(
         @Path() cid: Channel.ID,
         @Request() req: Express.Request
-    ): Promise<{}> {
+    ): Promise<void> {
         const { newObj: members, updated } = await chns.of(cid).addMember(req.user.id)
         await req.user.addChannel(cid)
 
@@ -116,7 +116,6 @@ export class ChannelController extends Controller {
                 }
             })
         }
-        return {}
     }
     /**
      * @summary Leave the channel.
@@ -125,7 +124,7 @@ export class ChannelController extends Controller {
     async leave(
         @Path() cid: Channel.ID,
         @Request() req: Express.Request
-    ): Promise<{}> {
+    ): Promise<void> {
         const { newObj: members, updated } = await chns.of(cid).removeMember(req.user.id)
         await req.user.removeChannel(cid)
 
@@ -139,7 +138,6 @@ export class ChannelController extends Controller {
                 }
             })
         }
-        return {}
     }
 
 }

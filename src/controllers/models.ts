@@ -36,6 +36,13 @@ namespace User {
      */
     export type UserInputID = string
 
+    /**
+     * @pattern ^[a-z0-9]+$ invalid uid
+     * @maxLength 8 data key too long
+     * @example "x"
+     */
+    export type DataKey = string
+
     export interface Create {
         uid: UserInputID
 
@@ -82,6 +89,10 @@ namespace User {
     }
     export interface PeerListItem {
         uid: ID
+    }
+
+    export interface Data {
+        [key: string]: any
     }
 }
 

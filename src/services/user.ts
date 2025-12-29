@@ -33,6 +33,7 @@ export class User {
             desc: db.desc(id),
             channels: db.channels(id),
             peers: db.peers(id),
+            data: (key: string) => db.data(id, key),
         }
     }
 
@@ -94,6 +95,14 @@ export class User {
             return list.find(v => v.uid === uid) ? list : [...list, { uid }]
         })
     }
+
+    data(key: string) {
+        return this.db.data(key).read()
+    }
+
+    updateData(key: string, data: object) {
+        return this.db.data(key).write(data)
+    }
 }
 
 
@@ -108,6 +117,7 @@ export class Service {
             auth(uid: string) { return usersTbl.json<Auth>(`${uid}.auth`) },
             channels(uid: string) { return usersTbl.json<ChannelListItem[]>(`${uid}.chs`) },
             peers(uid: string) { return usersTbl.json<PeerListItem[]>(`${uid}.peers`) },
+            data(uid: string, key: string) { return usersTbl.json<object>(`${uid}.${key}.data`) },
             token(s: string) { return tokensTbl.json<Token>(s) }
         }
     }
