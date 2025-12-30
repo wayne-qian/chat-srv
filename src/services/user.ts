@@ -33,7 +33,7 @@ export class User {
             desc: db.desc(id),
             channels: db.channels(id),
             peers: db.peers(id),
-            data: (key: string) => db.data(id, key),
+            data: db.data(id)
         }
     }
 
@@ -96,12 +96,17 @@ export class User {
         })
     }
 
-    data(key: string) {
-        return this.db.data(key).read()
+    async data(key: string) {
+        const obj = await this.db.data.read()
+        return obj ? obj[key] : null
     }
 
     updateData(key: string, data: object) {
-        return this.db.data(key).write(data)
+        return this.db.data.alter(obj => {
+            const newObj = { ...obj }
+            newObj[key] = data
+            return newObj
+        })
     }
 }
 
@@ -117,7 +122,7 @@ export class Service {
             auth(uid: string) { return usersTbl.json<Auth>(`${uid}.auth`) },
             channels(uid: string) { return usersTbl.json<ChannelListItem[]>(`${uid}.chs`) },
             peers(uid: string) { return usersTbl.json<PeerListItem[]>(`${uid}.peers`) },
-            data(uid: string, key: string) { return usersTbl.json<object>(`${uid}.${key}.data`) },
+            data(uid: string) { return usersTbl.json<{ [k in string]: object }>(`${uid}.data`) },
             token(s: string) { return tokensTbl.json<Token>(s) }
         }
     }

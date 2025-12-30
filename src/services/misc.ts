@@ -1,6 +1,7 @@
 import { Database } from '../database'
 import NodeCache from 'node-cache'
 import { validateHostname } from './validate'
+import { Forbidden } from '../error'
 
 export interface Stats {
     user: number
@@ -13,6 +14,17 @@ export interface Visits {
     minutes: { [i in number]: number }
     hours: { [i in number]: number }
     days: { [i in number]: number }
+}
+
+export interface RankRecord {
+    uid: string
+    ts: number
+    score: number
+}
+
+export interface RankConfig {
+    desc?: boolean
+    limit: number
 }
 
 function count(delta: number, limit: number, o: Visits['minutes']) {
@@ -39,9 +51,16 @@ export class Service {
     private readonly visitTTL = new NodeCache({ stdTTL: 60, checkperiod: 30 })
 
     constructor(db: Database) {
+        const tbl = db.table('misc')
         this.db = {
-            stats: db.table('misc').json<Stats>('stats'),
-            visits(hostname: string) { return db.table('misc').json<Visits>(`${hostname}.visits`) }
+            stats: tbl.json<Stats>('stats'),
+            visits(hostname: string) { return tbl.json<Visits>(`${hostname}.visits`) },
+            ranks(name: string) {
+                return {
+                    cfg: tbl.json<RankConfig>(`${name}.rank.cfg`),
+                    list: tbl.json<RankRecord[]>(`${name}.rank.list`)
+                }
+            }
         }
     }
 
@@ -57,6 +76,25 @@ export class Service {
     }
 
     // rank
+    rank(name: string) {
+        return this.db.ranks(name).list.read()
+    }
+
+    async updateRank(name: string, rec: RankRecord) {
+        const cfg = await this.db.ranks(name).cfg.read()
+        if (!cfg)
+            throw new Forbidden('not allowed')
+
+        return this.db.ranks(name).list.alter(list => {
+            if (!list) return [rec]
+            list = [...list, rec]
+            return list.sort((a, b) => {
+                if (cfg.desc)
+                    return b.score - a.score || a.ts - b.ts
+                return a.score - b.score || a.ts - b.ts
+            }).slice(0, cfg.limit)
+        })
+    }
 
     async visits(hostname: string, clientIP: string) {
         validateHostname(hostname)

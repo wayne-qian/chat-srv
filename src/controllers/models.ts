@@ -37,8 +37,8 @@ namespace User {
     export type UserInputID = string
 
     /**
-     * @pattern ^[a-z0-9]+$ invalid uid
-     * @maxLength 8 data key too long
+     * @pattern ^[a-z0-9]+$ invalid data key
+     * @maxLength 10 data key too long
      * @example "x"
      */
     export type DataKey = string
@@ -176,5 +176,21 @@ namespace Misc {
         hour: Int
         day: Int
         week: Int
+    }
+
+    /**
+     * @pattern ^[a-z0-9]+$ invalid rank name
+     * @maxLength 10 rank name too long
+     * @example "game"
+     */
+    export type RankName = string
+
+    export interface RankRecord {
+        uid: User.ID
+        score: number
+        ts: Timestamp
+    }
+    export interface UpdateRankRecord {
+        score: number
     }
 }

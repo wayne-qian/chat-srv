@@ -135,7 +135,7 @@ export class UserController extends Controller {
         @Body() body: User.Data,
         @Request() req: Express.Request
     ): Promise<void> {
-        return req.user.updateData(key, body)
+        await req.user.updateData(key, body)
     }
 }
 

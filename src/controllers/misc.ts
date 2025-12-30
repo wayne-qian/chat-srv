@@ -1,9 +1,9 @@
-import { Controller, Get, Route, Tags, Request } from "tsoa";
+import { Controller, Get, Route, Tags, Request, Path, Put, Body, Security } from "tsoa";
 import { Service } from '../services/misc'
 import { db } from '../database'
 import { onlineCount } from "./message";
 import Express from 'express'
-import {getClientIp} from 'request-ip'
+import { getClientIp } from 'request-ip'
 import { URL } from 'url'
 
 export const miscs = new Service(db)
@@ -46,9 +46,37 @@ export class MiscController extends Controller {
 
         return {
             total: 0,
-            hour:0,
+            hour: 0,
             day: 0,
             week: 0
         }
+    }
+
+    /**
+     * @summary Get the rank list named name.
+     */
+    @Get('ranks/{name}')
+    async getRank(
+        @Path() name: Misc.RankName
+    ): Promise<Misc.RankRecord[]> {
+        return await miscs.rank(name) || []
+    }
+
+    /**
+     * @summary Update the rank list named name.
+     */
+    @Put('ranks/{name}')
+    @Security('api_key')
+    async updateRank(
+        @Path() name: Misc.RankName,
+        @Body() body: Misc.UpdateRankRecord,
+        @Request() req: Express.Request
+    ): Promise<Misc.RankRecord[]> {
+        const { newObj } = await miscs.updateRank(name, {
+            ts: Date.now(),
+            score: body.score,
+            uid: req.user.id
+        })
+        return newObj
     }
 }

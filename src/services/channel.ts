@@ -1,7 +1,7 @@
 import Crypto from 'crypto'
 import { Database } from '../database'
 import { validateCID, validateUID } from './validate'
-import { Forbidden, NotFound } from '../error'
+import { Forbidden } from '../error'
 
 export interface Desc {
     createdAt: number
