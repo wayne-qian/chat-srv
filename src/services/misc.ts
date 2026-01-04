@@ -87,11 +87,15 @@ export class Service {
 
         return this.db.ranks(name).list.alter(list => {
             if (!list) return [rec]
-            list = [...list, rec]
-            return list.sort((a, b) => {
+            const set = new Set<string>()
+            return [...list, rec].sort((a, b) => {
                 if (cfg.desc)
                     return b.score - a.score || a.ts - b.ts
                 return a.score - b.score || a.ts - b.ts
+            }).filter(r => {
+                if (set.has(r.uid)) return false
+                set.add(r.uid)
+                return true
             }).slice(0, cfg.limit)
         })
     }

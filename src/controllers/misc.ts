@@ -73,9 +73,9 @@ export class MiscController extends Controller {
         @Request() req: Express.Request
     ): Promise<Misc.RankRecord[]> {
         const { newObj } = await miscs.updateRank(name, {
-            ts: Date.now(),
+            uid: req.user.id,
             score: body.score,
-            uid: req.user.id
+            ts: Date.now()
         })
         return newObj
     }
